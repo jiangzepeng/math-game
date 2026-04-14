@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌟 一年级数学闯关游戏</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .game-container {
+    background: white;
+    border-radius: 24px;
+    padding: 30px;
+    max-width: 680px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+
+  /* 标题区 */
+  .header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .header h1 {
+    font-size: 28px;
+    color: #5b21b6;
+    margin-bottom: 6px;
+  }
+  .header p {
+    color: #888;
+    font-size: 14px;
+  }
+
+  /* 进度条 */
+  .progress-bar-wrap {
+    background: #e5e7eb;
+    border-radius: 99px;
+    height: 12px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #a78bfa, #7c3aed);
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+  .progress-text {
+    text-align: right;
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 20px;
+  }
+
+  /* 分类标签 */
+  .category-badge {
+    display: inline-block;
+    background: #ede9fe;
+    color: #7c3aed;
+    border-radius: 99px;
+    padding: 4px 14px;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 14px;
+  }
+
+  /* 题目 */
+  .question-box {
+    background: #f5f3ff;
+    border-radius: 16px;
+    padding: 22px 24px;
+    margin-bottom: 20px;
+    min-height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .question-text {
+    font-size: 22px;
+    color: #1e1b4b;
+    text-align: center;
+    line-height: 1.6;
+    font-weight: bold;
+  }
+
+  /* 选项 */
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .option-btn {
+    background: #f9fafb;
+    border: 2px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 16px 12px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .option-btn:hover:not(:disabled) {
+    border-color: #a78bfa;
+    background: #ede9fe;
+    transform: translateY(-2px);
+  }
+  .option-btn.correct {
+    background: #d1fae5;
+    border-color: #10b981;
+    color: #065f46;
+  }
+  .option-btn.wrong {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #991b1b;
+  }
+  .option-btn:disabled { cursor: default; }
+
+  /* 填空题输入 */
+  .fill-area {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .fill-input {
+    flex: 1;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 22px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .fill-input:focus { border-color: #a78bfa; }
+  .fill-input.correct { border-color: #10b981; background: #d1fae5; }
+  .fill-input.wrong { border-color: #ef4444; background: #fee2e2; }
+  .submit-btn {
+    background: linear-gradient(135deg, #7c3aed, #a78bfa);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .submit-btn:hover { opacity: 0.85; }
+
+  /* 反馈 */
+  .feedback {
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    min-height: 32px;
+    margin-bottom: 16px;
+    transition: all 0.3s;
+  }
+  .feedback.correct { color: #10b981; }
+  .feedback.wrong { color: #ef4444; }
+
+  /* 解析 */
+  .explanation {
+    background: #fef9c3;
+    border-left: 4px solid #f59e0b;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 15px;
+    color: #78350f;
+    margin-bottom: 16px;
+    display: none;
+    line-height: 1.7;
+  }
+
+  /* 下一题按钮 */
+  .next-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #7c3aed, #a78bfa);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    display: none;
+    transition: opacity 0.2s;
+  }
+  .next-btn:hover { opacity: 0.85; }
+
+  /* 分数栏 */
+  .score-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f5f3ff;
+    border-radius: 12px;
+    padding: 10px 18px;
+    margin-bottom: 20px;
+    font-size: 15px;
+    color: #5b21b6;
+    font-weight: bold;
+  }
+  .star-count { font-size: 20px; }
+
+  /* 结算页 */
+  .result-screen {
+    text-align: center;
+    padding: 20px 0;
+    display: none;
+  }
+  .result-emoji { font-size: 72px; margin-bottom: 16px; }
+  .result-title { font-size: 28px; font-weight: bold; color: #5b21b6; margin-bottom: 10px; }
+  .result-score { font-size: 20px; color: #374151; margin-bottom: 24px; }
+  .result-detail {
+    background: #f5f3ff;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 24px;
+    text-align: left;
+  }
+  .result-detail h3 { color: #7c3aed; margin-bottom: 10px; font-size: 16px; }
+  .result-detail p { font-size: 14px; color: #555; line-height: 1.8; }
+  .restart-btn {
+    background: linear-gradient(135deg, #7c3aed, #a78bfa);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 16px 40px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .restart-btn:hover { opacity: 0.85; }
+
+  /* 章节选择 */
+  .chapter-select {
+    display: none;
+    margin-bottom: 20px;
+  }
+  .chapter-select.show { display: block; }
+  .chapter-title { font-size: 16px; color: #555; margin-bottom: 10px; font-weight: bold; }
+  .chapter-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chapter-btn {
+    background: #ede9fe;
+    color: #7c3aed;
+    border: 2px solid #c4b5fd;
+    border-radius: 99px;
+    padding: 6px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: bold;
+  }
+  .chapter-btn:hover, .chapter-btn.active {
+    background: #7c3aed;
+    color: white;
+    border-color: #7c3aed;
+  }
+</style>
+</head>
+<body>
+<div class="game-container">
+  <div class="header">
+    <h1>🌟 一年级数学闯关</h1>
+    <p>人教版一年级下册 · 2025春 · 趣味复习</p>
+  </div>
+
+  <!-- 章节筛选 -->
+  <div class="chapter-select show" id="chapterSelect">
+    <div class="chapter-title">📚 选择章节（可多选，默认全部）：</div>
+    <div class="chapter-btns" id="chapterBtns"></div>
+  </div>
+
+  <!-- 分数栏 -->
+  <div class="score-bar">
+    <span>⭐ 得星：<span id="starCount">0</span></span>
+    <span>✅ 答对：<span id="correctCount">0</span></span>
+    <span>❌ 答错：<span id="wrongCount">0</span></span>
+  </div>
+
+  <!-- 进度 -->
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progressBar" style="width:0%"></div>
+  </div>
+  <div class="progress-text" id="progressText">第 1 题 / 共 20 题</div>
+
+  <!-- 题目区 -->
+  <div id="gameArea">
+    <div class="category-badge" id="categoryBadge">📐 认识图形</div>
+    <div class="question-box">
+      <div class="question-text" id="questionText">加载中...</div>
+    </div>
+
+    <!-- 选择题选项 -->
+    <div class="options-grid" id="optionsGrid"></div>
+
+    <!-- 填空题 -->
+    <div class="fill-area" id="fillArea" style="display:none">
+      <input type="number" class="fill-input" id="fillInput" placeholder="输入答案" />
+      <button class="submit-btn" onclick="submitFill()">确认</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+    <div class="explanation" id="explanation"></div>
+    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">下一题 →</button>
+  </div>
+
+  <!-- 结算页 -->
+  <div class="result-screen" id="resultScreen">
+    <div class="result-emoji" id="resultEmoji">🏆</div>
+    <div class="result-title" id="resultTitle">太棒了！</div>
+    <div class="result-score" id="resultScore"></div>
+    <div class="result-detail" id="resultDetail"></div>
+    <button class="restart-btn" onclick="restartGame()">🔄 再玩一次</button>
+  </div>
+</div>
+
+<script>
+// ===================== 题库 =====================
+const allQuestions = [
+  // 一、认识平面图形
+  { chapter: 1, chapterName: "认识平面图形", type: "choice",
+    q: "下面哪个是三角形？", emoji: "📐",
+    options: ["🔺 三角形", "⬜ 正方形", "⭕ 圆形", "▱ 平行四边形"],
+    answer: 0, explain: "三角形有3条边、3个角，就像小山峰的形状！" },
+  { chapter: 1, chapterName: "认识平面图形", type: "choice",
+    q: "2个同样的三角形可以拼成什么？", emoji: "📐",
+    options: ["平行四边形", "圆形", "五边形", "梯形"],
+    answer: 0, explain: "2个同样的三角形拼在一起，可以变成平行四边形或更大的三角形！" },
+  { chapter: 1, chapterName: "认识平面图形", type: "choice",
+    q: "七巧板一共有几块？", emoji: "📐",
+    options: ["5块", "6块", "7块", "8块"],
+    answer: 2, explain: "七巧板由7块不同形状的板组成，可以拼出各种图案！" },
+  { chapter: 1, chapterName: "认识平面图形", type: "choice",
+    q: "正方形和长方形有什么共同点？", emoji: "📐",
+    options: ["都有4条边", "4条边都相等", "都是圆的", "只有3个角"],
+    answer: 0, explain: "正方形和长方形都有4条边和4个角，正方形的4条边都相等！" },
+  { chapter: 1, chapterName: "认识平面图形", type: "choice",
+    q: "平面图形的面是什么样的？", emoji: "📐",
+    options: ["弯弯的", "平平的", "尖尖的", "圆圆的"],
+    answer: 1, explain: "平面图形的面是平平的，可以从立体图形的面上描出来！" },
+
+  // 二、20以内退位减法
+  { chapter: 2, chapterName: "退位减法", type: "fill",
+    q: "15 - 9 = ？\n（提示：想一想 9 + ? = 15）", emoji: "➖",
+    answer: 6, explain: "想加算减：9 + 6 = 15，所以 15 - 9 = 6 ✨" },
+  { chapter: 2, chapterName: "退位减法", type: "fill",
+    q: "13 - 8 = ？", emoji: "➖",
+    answer: 5, explain: "破十法：13 - 8，先算 10 - 8 = 2，再算 2 + 3 = 5 ✨" },
+  { chapter: 2, chapterName: "退位减法", type: "fill",
+    q: "12 - 7 = ？", emoji: "➖",
+    answer: 5, explain: "想加算减：7 + 5 = 12，所以 12 - 7 = 5 ✨" },
+  { chapter: 2, chapterName: "退位减法", type: "fill",
+    q: "11 - 6 = ？", emoji: "➖",
+    answer: 5, explain: "破十法：10 - 6 = 4，4 + 1 = 5，所以 11 - 6 = 5 ✨" },
+  { chapter: 2, chapterName: "退位减法", type: "choice",
+    q: "小明有14颗糖，吃了9颗，还剩几颗？", emoji: "🍬",
+    options: ["4颗", "5颗", "6颗", "3颗"],
+    answer: 1, explain: "14 - 9 = 5，还剩 5 颗糖！想加算减：9 + 5 = 14 ✨" },
+
+  // 三、100以内数的认识
+  { chapter: 3, chapterName: "100以内数", type: "fill",
+    q: "10个十是多少？", emoji: "🔢",
+    answer: 100, explain: "10个十合在一起就是一百，写作 100！" },
+  { chapter: 3, chapterName: "100以内数", type: "choice",
+    q: "56 是由几个十和几个一组成的？", emoji: "🔢",
+    options: ["5个十6个一", "6个十5个一", "56个一", "5个一6个十"],
+    answer: 0, explain: "56 = 5个十 + 6个一，十位是5，个位是6！" },
+  { chapter: 3, chapterName: "100以内数", type: "choice",
+    q: "比较大小：78 ○ 87", emoji: "🔢",
+    options: ["78 > 87", "78 = 87", "78 < 87", "无法比较"],
+    answer: 2, explain: "先比十位：7 < 8，所以 78 < 87！十位不同，直接比十位就行！" },
+  { chapter: 3, chapterName: "100以内数", type: "fill",
+    q: "百数表中，第一行最后一个数是？", emoji: "🔢",
+    answer: 10, explain: "百数表第一行是 1、2、3...10，最后一个是 10！" },
+  { chapter: 3, chapterName: "100以内数", type: "choice",
+    q: "下面哪个数比 65 大一些？", emoji: "🔢",
+    options: ["30", "67", "90", "10"],
+    answer: 1, explain: "67 比 65 大一点点，叫做'大一些'；90 比 65 大很多，叫'大得多'！" },
+
+  // 四、口算加减法
+  { chapter: 4, chapterName: "口算加减法", type: "fill",
+    q: "36 + 40 = ？", emoji: "🧮",
+    answer: 76, explain: "整十数相加：个位不变，十位 3+4=7，所以 36+40=76！" },
+  { chapter: 4, chapterName: "口算加减法", type: "fill",
+    q: "85 - 30 = ？", emoji: "🧮",
+    answer: 55, explain: "整十数相减：个位不变，十位 8-3=5，所以 85-30=55！" },
+  { chapter: 4, chapterName: "口算加减法", type: "fill",
+    q: "47 + 6 = ？", emoji: "🧮",
+    answer: 53, explain: "个位 7+6=13，满十进一，十位 4+1=5，所以 47+6=53！" },
+
+  // 五、笔算加减法
+  { chapter: 5, chapterName: "笔算加减法", type: "choice",
+    q: "笔算时，从哪一位开始算？", emoji: "✏️",
+    options: ["从十位开始", "从个位开始", "从百位开始", "随便哪位都行"],
+    answer: 1, explain: "笔算加减法要从个位开始算，这样才能正确进位或退位！" },
+  { chapter: 5, chapterName: "笔算加减法", type: "choice",
+    q: "笔算 35 + 47，个位 5+7=12，应该怎么做？", emoji: "✏️",
+    options: ["个位写12", "个位写2，向十位进1", "个位写1，十位写2", "个位写0"],
+    answer: 1, explain: "满十进一：个位写 2，向十位进 1，这就是进位！" },
+  { chapter: 5, chapterName: "笔算加减法", type: "fill",
+    q: "笔算：63 - 28 = ？", emoji: "✏️",
+    answer: 35, explain: "个位 3 不够减 8，从十位退 1，变成 13-8=5；十位 6-1-2=3，所以 63-28=35！" },
+
+  // 六、数量关系
+  { chapter: 6, chapterName: "数量关系", type: "choice",
+    q: "求'一共有多少'，用什么方法？", emoji: "🧩",
+    options: ["减法", "加法", "乘法", "除法"],
+    answer: 1, explain: "求一共、求总数，要把两部分合起来，用加法！" },
+  { chapter: 6, chapterName: "数量关系", type: "choice",
+    q: "小红有8朵花，小明比小红多3朵，小明有几朵？", emoji: "🌸",
+    options: ["5朵", "11朵", "8朵", "3朵"],
+    answer: 1, explain: "比谁多几 → 用加法：8 + 3 = 11朵！" },
+  { chapter: 6, chapterName: "数量关系", type: "choice",
+    q: "求'还剩多少'，用什么方法？", emoji: "🧩",
+    options: ["加法", "减法", "两种都行", "不用算"],
+    answer: 1, explain: "求还剩多少，要从总数里去掉一部分，用减法！" },
+
+  // 七、认识人民币
+  { chapter: 7, chapterName: "认识人民币", type: "fill",
+    q: "1元 = 多少角？", emoji: "💰",
+    answer: 10, explain: "1元 = 10角，就像10个小朋友合成一个大朋友！" },
+  { chapter: 7, chapterName: "认识人民币", type: "fill",
+    q: "1角 = 多少分？", emoji: "💰",
+    answer: 10, explain: "1角 = 10分，人民币单位：元、角、分！" },
+  { chapter: 7, chapterName: "认识人民币", type: "choice",
+    q: "买一个苹果3元5角，付了5元，应找回多少？", emoji: "🍎",
+    options: ["1元5角", "2元5角", "1元", "2元"],
+    answer: 0, explain: "5元 - 3元5角 = 1元5角，这就是找零！" },
+  { chapter: 7, chapterName: "认识人民币", type: "choice",
+    q: "下面哪种说法是对的？", emoji: "💰",
+    options: ["1元 = 100分", "1角 = 100分", "1元 = 1角", "1分 = 1角"],
+    answer: 0, explain: "1元 = 10角 = 100分，换算关系要记牢！" },
+];
+
+// ===================== 游戏状态 =====================
+let questions = [];
+let currentIndex = 0;
+let stars = 0;
+let correctCount = 0;
+let wrongCount = 0;
+let answered = false;
+let selectedChapters = [];
+
+// ===================== 初始化章节按钮 =====================
+function initChapters() {
+  const chapters = [...new Set(allQuestions.map(q => q.chapter))];
+  const container = document.getElementById('chapterBtns');
+  container.innerHTML = '';
+  
+  const allBtn = document.createElement('button');
+  allBtn.className = 'chapter-btn active';
+  allBtn.textContent = '全部';
+  allBtn.dataset.chapter = '0';
+  allBtn.onclick = () => toggleChapter(0, allBtn);
+  container.appendChild(allBtn);
+
+  chapters.forEach(ch => {
+    const q = allQuestions.find(q => q.chapter === ch);
+    const btn = document.createElement('button');
+    btn.className = 'chapter-btn';
+    btn.textContent = `第${ch}章 ${q.chapterName}`;
+    btn.dataset.chapter = ch;
+    btn.onclick = () => toggleChapter(ch, btn);
+    container.appendChild(btn);
+  });
+}
+
+function toggleChapter(ch, btn) {
+  if (ch === 0) {
+    selectedChapters = [];
+    document.querySelectorAll('.chapter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  } else {
+    document.querySelector('[data-chapter="0"]').classList.remove('active');
+    btn.classList.toggle('active');
+    if (selectedChapters.includes(ch)) {
+      selectedChapters = selectedChapters.filter(c => c !== ch);
+    } else {
+      selectedChapters.push(ch);
+    }
+    if (selectedChapters.length === 0) {
+      document.querySelector('[data-chapter="0"]').classList.add('active');
+    }
+  }
+}
+
+// ===================== 开始游戏 =====================
+function startGame() {
+  let pool = selectedChapters.length > 0
+    ? allQuestions.filter(q => selectedChapters.includes(q.chapter))
+    : allQuestions;
+  
+  // 随机打乱，取20题
+  questions = shuffle([...pool]).slice(0, Math.min(20, pool.length));
+  currentIndex = 0;
+  stars = 0;
+  correctCount = 0;
+  wrongCount = 0;
+  
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('gameArea').style.display = 'block';
+  document.getElementById('chapterSelect').classList.remove('show');
+  
+  updateScore();
+  loadQuestion();
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ===================== 加载题目 =====================
+function loadQuestion() {
+  if (currentIndex >= questions.length) {
+    showResult();
+    return;
+  }
+  
+  answered = false;
+  const q = questions[currentIndex];
+  
+  // 进度
+  const pct = (currentIndex / questions.length) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `第 ${currentIndex + 1} 题 / 共 ${questions.length} 题`;
+  
+  // 分类
+  document.getElementById('categoryBadge').textContent = `${q.emoji} ${q.chapterName}`;
+  
+  // 题目
+  document.getElementById('questionText').textContent = q.q;
+  
+  // 清空反馈
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('explanation').style.display = 'none';
+  document.getElementById('nextBtn').style.display = 'none';
+  
+  if (q.type === 'choice') {
+    document.getElementById('optionsGrid').style.display = 'grid';
+    document.getElementById('fillArea').style.display = 'none';
+    renderOptions(q);
+  } else {
+    document.getElementById('optionsGrid').style.display = 'none';
+    document.getElementById('fillArea').style.display = 'flex';
+    const input = document.getElementById('fillInput');
+    input.value = '';
+    input.className = 'fill-input';
+    input.disabled = false;
+    input.focus();
+    input.onkeydown = (e) => { if (e.key === 'Enter') submitFill(); };
+  }
+}
+
+function renderOptions(q) {
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = opt;
+    btn.onclick = () => selectOption(i, btn, q);
+    grid.appendChild(btn);
+  });
+}
+
+// ===================== 选择题答题 =====================
+function selectOption(index, btn, q) {
+  if (answered) return;
+  answered = true;
+  
+  const allBtns = document.querySelectorAll('.option-btn');
+  allBtns.forEach(b => b.disabled = true);
+  
+  if (index === q.answer) {
+    btn.classList.add('correct');
+    showFeedback(true);
+    stars++;
+    correctCount++;
+  } else {
+    btn.classList.add('wrong');
+    allBtns[q.answer].classList.add('correct');
+    showFeedback(false);
+    wrongCount++;
+  }
+  
+  showExplanation(q.explain);
+  updateScore();
+}
+
+// ===================== 填空题答题 =====================
+function submitFill() {
+  if (answered) return;
+  const q = questions[currentIndex];
+  const input = document.getElementById('fillInput');
+  const val = parseInt(input.value.trim());
+  
+  if (isNaN(val)) {
+    input.focus();
+    return;
+  }
+  
+  answered = true;
+  input.disabled = true;
+  
+  if (val === q.answer) {
+    input.classList.add('correct');
+    showFeedback(true);
+    stars++;
+    correctCount++;
+  } else {
+    input.classList.add('wrong');
+    showFeedback(false, q.answer);
+    wrongCount++;
+  }
+  
+  showExplanation(q.explain);
+  updateScore();
+}
+
+// ===================== 反馈 =====================
+function showFeedback(correct, correctAnswer) {
+  const fb = document.getElementById('feedback');
+  if (correct) {
+    const msgs = ['🎉 太棒了！', '✨ 答对啦！', '🌟 真厉害！', '👏 完全正确！', '🏆 超级棒！'];
+    fb.textContent = msgs[Math.floor(Math.random() * msgs.length)];
+    fb.className = 'feedback correct';
+  } else {
+    fb.textContent = correctAnswer !== undefined
+      ? `❌ 答错了，正确答案是 ${correctAnswer}`
+      : '❌ 答错了，看看解析吧！';
+    fb.className = 'feedback wrong';
+  }
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function showExplanation(text) {
+  const el = document.getElementById('explanation');
+  el.textContent = '💡 ' + text;
+  el.style.display = 'block';
+}
+
+// ===================== 下一题 =====================
+function nextQuestion() {
+  currentIndex++;
+  loadQuestion();
+}
+
+// ===================== 更新分数 =====================
+function updateScore() {
+  document.getElementById('starCount').textContent = stars;
+  document.getElementById('correctCount').textContent = correctCount;
+  document.getElementById('wrongCount').textContent = wrongCount;
+}
+
+// ===================== 结算 =====================
+function showResult() {
+  document.getElementById('gameArea').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'block';
+  
+  const total = questions.length;
+  const pct = Math.round((correctCount / total) * 100);
+  
+  let emoji, title;
+  if (pct >= 90) { emoji = '🏆'; title = '数学小天才！'; }
+  else if (pct >= 70) { emoji = '🌟'; title = '做得很棒！'; }
+  else if (pct >= 50) { emoji = '💪'; title = '继续加油！'; }
+  else { emoji = '📚'; title = '多练习就会了！'; }
+  
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultScore').textContent =
+    `答对 ${correctCount} 题 / 共 ${total} 题，正确率 ${pct}%，获得 ⭐ ${stars} 颗星！`;
+  
+  // 薄弱章节分析
+  const wrongByChapter = {};
+  questions.forEach((q, i) => {
+    // 这里简化处理，实际可记录每题对错
+  });
+  
+  document.getElementById('resultDetail').innerHTML = `
+    <h3>📊 本次答题总结</h3>
+    <p>✅ 答对：${correctCount} 题 &nbsp;&nbsp; ❌ 答错：${wrongCount} 题</p>
+    <p>⭐ 获得星星：${stars} 颗</p>
+    <p style="margin-top:8px; color:#7c3aed;">
+      ${pct >= 80 ? '🎊 表现优秀，继续保持！' : '💡 建议多复习答错的题目哦！'}
+    </p>
+  `;
+}
+
+// ===================== 重新开始 =====================
+function restartGame() {
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('gameArea').style.display = 'block';
+  document.getElementById('chapterSelect').classList.add('show');
+  
+  // 重置进度条
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('progressText').textContent = '第 1 题 / 共 20 题';
+  document.getElementById('questionText').textContent = '点击下方按钮开始游戏！';
+  document.getElementById('optionsGrid').innerHTML = '';
+  document.getElementById('fillArea').style.display = 'none';
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('explanation').style.display = 'none';
+  document.getElementById('nextBtn').style.display = 'none';
+  document.getElementById('categoryBadge').textContent = '📚 选择章节后开始';
+  
+  stars = 0; correctCount = 0; wrongCount = 0;
+  updateScore();
+}
+
+// ===================== 启动 =====================
+initChapters();
+
+// 初始状态：显示开始提示
+document.getElementById('questionText').textContent = '👆 选好章节，点击下方开始！';
+document.getElementById('optionsGrid').innerHTML = `
+  <button class="option-btn" style="grid-column:1/-1; background:linear-gradient(135deg,#7c3aed,#a78bfa); color:white; border-color:#7c3aed; font-size:20px; padding:20px;" onclick="startGame()">
+    🚀 开始闯关！
+  </button>`;
+</script>
+</body>
+</html>
