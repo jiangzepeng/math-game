@@ -936,26 +936,73 @@ let q5Selected = null;
 let q7Answer = null;
 let q9Painted = [];
 let soundMuted = false;
+let audioUnlocked = false;
 
 // Web Audio API Sound System
-const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
 
 function getAudioCtx() {
-  if (!audioCtx) audioCtx = new AudioCtx();
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  // Resume context if suspended (browsers suspend until user interaction)
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
   return audioCtx;
 }
 
+// Initialize audio on first user interaction
+function initAudioOnInteraction() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  try {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+    // Play a subtle welcome sound
+    playWelcome();
+  } catch(e) {
+    console.log('Audio init:', e);
+  }
+}
+
+// Welcome sound when game starts
+function playWelcome() {
+  if (soundMuted) return;
+  try {
+    const ctx = getAudioCtx();
+    const notes = [523.25, 659.25]; // C5, E5
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.1, ctx.currentTime + i * 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.1 + 0.15);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.1);
+      osc.stop(ctx.currentTime + i * 0.1 + 0.15);
+    });
+  } catch(e) {}
+}
+
 function toggleSound() {
+  initAudioOnInteraction();
   soundMuted = !soundMuted;
   const btn = document.getElementById('soundToggle');
   btn.textContent = soundMuted ? '🔇' : '🔊';
   btn.classList.toggle('muted', soundMuted);
   if (!soundMuted) {
-    // Play a small sound to confirm unmuted
     playClick();
   }
 }
+
+// Add click listener to entire document for audio unlock
+document.addEventListener('click', initAudioOnInteraction, { once: true });
+document.addEventListener('touchstart', initAudioOnInteraction, { once: true });
 
 // Correct answer sound - cheerful ascending chime
 function playCorrect() {
@@ -1344,10 +1391,6 @@ function wrongQ(qid) {
   setTimeout(() => card.classList.remove('wrong'), 600);
 }
 
-function spawnStar(el) {
-  playStarPop();
-  const rect = el.getBoundingClientRect();
-
 function updateProgress() {
   document.getElementById('scoreDisplay').textContent = score;
   document.getElementById('progressText').textContent = completed;
@@ -1355,6 +1398,7 @@ function updateProgress() {
 }
 
 function spawnStar(el) {
+  playStarPop();
   const rect = el.getBoundingClientRect();
   const star = document.createElement('div');
   star.className = 'star-burst';
