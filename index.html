@@ -6,11 +6,6 @@
 <title>🌟 一年级数学游戏集</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  
-  @media print {
-    .no-print, .game-cards { display: none !important; }
-    body { background: white !important; }
-  }
 
   body {
     font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -101,29 +96,11 @@
   .qr-box {
     background: white; border-radius: 20px; padding: 20px; text-align: center;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 700px;
+    margin-bottom: 30px;
   }
   .qr-box h3 { font-size: 15px; color: #5b21b6; margin-bottom: 12px; }
   .qr-box img { border-radius: 12px; }
   .qr-hint { font-size: 12px; color: #888; margin-top: 8px; }
-
-  .print-info {
-    background: white; border-radius: 16px; padding: 16px 20px;
-    width: 100%; max-width: 700px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  }
-  .print-info h4 { font-size: 14px; color: #5b21b6; margin-bottom: 8px; }
-  .print-info ol { font-size: 13px; color: #555; padding-left: 20px; line-height: 2; }
-  .btn-print {
-    margin-top: 10px; padding: 10px 20px; border: none; border-radius: 10px;
-    font-size: 14px; font-weight: bold; cursor: pointer;
-    background: #7c3aed; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  }
-  .btn-print:hover { transform: translateY(-2px); }
-
-  .no-print { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 100; }
-  .copy-toast {
-    position: fixed; bottom: 100px; right: 20px; background: #1f2937; color: white;
-    padding: 10px 20px; border-radius: 10px; font-size: 14px; display: none; z-index: 200;
-  }
 
   @media (max-width: 600px) { .game-cards { grid-template-columns: 1fr; } }
 </style>
@@ -167,18 +144,6 @@
   <div class="qr-hint" id="qrHint">微信/支付宝扫一扫</div>
 </div>
 
-<div class="print-info no-print">
-  <h4>🖨️ 打印说明</h4>
-  <ol>
-    <li>按 <strong>Ctrl+P</strong> (Windows) 或 <strong>Cmd+P</strong> (Mac) 打开打印</li>
-    <li>选择「保存为PDF」可生成电子版</li>
-    <li>选择打印机可打印纸质版</li>
-  </ol>
-  <button class="btn-print no-print" onclick="window.print()">🖨️ 打印这张页</button>
-</div>
-
-<div class="copy-toast" id="copyToast">✅ 链接已复制！</div>
-
 <script>
 let currentGame = null;
 
@@ -218,14 +183,6 @@ const shareUrl = baseUrl;
 
 document.getElementById('qrcode').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shareUrl)}&margin=10&format=png`;
 document.getElementById('qrHint').textContent = '微信/支付宝扫一扫，或长按识别';
-
-function copyLink() {
-  navigator.clipboard.writeText(shareUrl).then(() => {
-    const t = document.getElementById('copyToast');
-    t.style.display = 'block';
-    setTimeout(() => t.style.display = 'none', 2500);
-  });
-}
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeGame(); });
 </script>
