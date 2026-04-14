@@ -99,6 +99,29 @@
     gap: 8px;
     animation: pulse 2s ease-in-out infinite;
   }
+  .sound-toggle {
+    background: white;
+    border: 2px solid #EEE;
+    border-radius: 50px;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    flex-shrink: 0;
+  }
+  .sound-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .sound-toggle.muted {
+    background: #F5F5F5;
+    opacity: 0.7;
+  }
   @keyframes pulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.05); }
@@ -746,6 +769,7 @@
 
 <!-- Score bar -->
 <div class="score-bar">
+  <button class="sound-toggle" id="soundToggle" onclick="toggleSound()" title="声音开关">🔊</button>
   <div class="score-badge">
     <span>⭐</span>
     <span id="scoreDisplay">0</span> 分
@@ -911,6 +935,153 @@ let q5Pairs = {};
 let q5Selected = null;
 let q7Answer = null;
 let q9Painted = [];
+let soundMuted = false;
+
+// Web Audio API Sound System
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  return audioCtx;
+}
+
+function toggleSound() {
+  soundMuted = !soundMuted;
+  const btn = document.getElementById('soundToggle');
+  btn.textContent = soundMuted ? '🔇' : '🔊';
+  btn.classList.toggle('muted', soundMuted);
+  if (!soundMuted) {
+    // Play a small sound to confirm unmuted
+    playClick();
+  }
+}
+
+// Correct answer sound - cheerful ascending chime
+function playCorrect() {
+  if (soundMuted) return;
+  try {
+    const ctx = getAudioCtx();
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5 E5 G5 C6
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.18, ctx.currentTime + i * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 0.25);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.08);
+      osc.stop(ctx.currentTime + i * 0.08 + 0.25);
+    });
+  } catch(e) {}
+}
+
+// Wrong answer sound - low buzzer
+function playWrong() {
+  if (soundMuted) return;
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(100, ctx.currentTime + 0.3);
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.35);
+  } catch(e) {}
+}
+
+// Button click sound
+function playClick() {
+  if (soundMuted) return;
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 800;
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.06);
+  } catch(e) {}
+}
+
+// Completion fanfare
+function playFanfare() {
+  if (soundMuted) return;
+  try {
+    const ctx = getAudioCtx();
+    const chords = [
+      [523.25, 659.25, 783.99, 1046.50],
+      [587.33, 739.99, 880.00, 1174.66],
+      [659.25, 830.61, 987.77, 1318.51],
+      [783.99, 987.77, 1174.66, 1567.98]
+    ];
+    chords.forEach((chord, ci) => {
+      chord.forEach(freq => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.06, ctx.currentTime + ci * 0.18);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + ci * 0.18 + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + ci * 0.18);
+        osc.stop(ctx.currentTime + ci * 0.18 + 0.3);
+      });
+    });
+  } catch(e) {}
+}
+
+// Star pop sound
+function playStarPop() {
+  if (soundMuted) return;
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(600, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(1200, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.12);
+  } catch(e) {}
+}
+
+// Shape match sound
+function playMatch() {
+  if (soundMuted) return;
+  try {
+    const ctx = getAudioCtx();
+    const notes = [880, 1108.73, 1318.51];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.06 + 0.15);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.06);
+      osc.stop(ctx.currentTime + i * 0.06 + 0.15);
+    });
+  } catch(e) {}
+}
 
 // Init shape matching
 function initShapeGrid() {
@@ -944,6 +1115,7 @@ function initShapeGrid() {
 }
 
 function selectShape(id, label, el) {
+  playClick();
   if (el.classList.contains('matched')) return;
 
   if (q5Selected === null) {
@@ -955,92 +1127,115 @@ function selectShape(id, label, el) {
       q5Selected = null;
     } else if (q5Selected.label === label) {
       // Match!
+      playMatch();
       el.classList.add('matched');
       el.classList.remove('selected');
       q5Selected.el.classList.add('matched');
       q5Selected.el.classList.remove('selected');
       q5Pairs[label] = true;
-      q5Selected = null;
       spawnStar(el);
-      spawnStar(q5Selected?.el);
+      spawnStar(q5Selected.el);
+      q5Selected = null;
       if (Object.keys(q5Pairs).length === 6) {
-        setTimeout(() => completeQ('q5'), 500);
+        playCorrect();
+        setTimeout(() => completeQ('q5'), 400);
       }
     } else {
-      q5Selected.el.classList.remove('selected');
-      el.classList.add('selected');
-      q5Selected = { id, label, el };
+      playWrong();
+      setTimeout(() => {
+        q5Selected.el.classList.remove('selected');
+        el.classList.remove('selected');
+      }, 300);
+      q5Selected = null;
     }
   }
 }
 
 // Apple selection
 function toggleApple(btn) {
+  playClick();
   btn.classList.toggle('selected');
 }
 
 function checkQ1() {
+  playClick();
   const selected = document.querySelectorAll('#appleRow .apple-btn.selected');
   if (selected.length === 3) {
     selected.forEach(b => b.classList.add('selected'));
+    playCorrect();
     completeQ('q1');
   } else {
+    playWrong();
     wrongQ('q1');
   }
 }
 
 // Circle selection
 function selectCircle(el, type) {
+  playClick();
   document.querySelectorAll('.circle-option').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
   q2Answer = type;
 }
 
 function checkQ2() {
+  playClick();
   if (q2Answer === 'big') {
     document.getElementById('cirBig').classList.add('correct');
+    playCorrect();
     completeQ('q2');
   } else if (q2Answer !== null) {
+    playWrong();
     wrongQ('q2');
   }
 }
 
 // Q3, Q4, Q10, Q8
 function checkQ3() {
+  playClick();
   const v = document.getElementById('q3input').value.trim();
   if (v === '15') {
     document.getElementById('q3input').classList.add('correct');
+    playCorrect();
     completeQ('q3');
   } else {
     document.getElementById('q3input').classList.add('wrong');
+    playWrong();
     setTimeout(() => document.getElementById('q3input').classList.remove('wrong'), 600);
   }
 }
 
 function checkQ4() {
+  playClick();
   const v = document.getElementById('q4input').value.trim();
   if (v === '6') {
     document.getElementById('q4input').classList.add('correct');
+    playCorrect();
     completeQ('q4');
   } else {
     document.getElementById('q4input').classList.add('wrong');
+    playWrong();
     setTimeout(() => document.getElementById('q4input').classList.remove('wrong'), 600);
   }
 }
 
 function checkQ10() {
+  playClick();
   const v = document.getElementById('q10input').value.trim();
   if (v === '20') {
     document.getElementById('q10input').classList.add('correct');
+    playCorrect();
     completeQ('q10');
   } else {
     document.getElementById('q10input').classList.add('wrong');
+    playWrong();
     setTimeout(() => document.getElementById('q10input').classList.remove('wrong'), 600);
   }
 }
 
 // Q6 neighbors
 function checkQ6() {
+  playClick();
   const a = document.getElementById('q6a').value.trim();
   const b = document.getElementById('q6b').value.trim();
   const q6aEl = document.getElementById('q6a');
@@ -1049,8 +1244,10 @@ function checkQ6() {
   if (a === '17' && b === '19') {
     q6aEl.classList.add('correct');
     q6bEl.classList.add('correct');
+    playCorrect();
     completeQ('q6');
   } else {
+    playWrong();
     if (a !== '17') q6aEl.classList.add('wrong');
     if (b !== '19') q6bEl.classList.add('wrong');
     setTimeout(() => {
@@ -1062,6 +1259,7 @@ function checkQ6() {
 
 // Q7 True/False
 function selectTF(ans) {
+  playClick();
   const trueBtn = document.getElementById('tfTrue');
   const falseBtn = document.getElementById('tfFalse');
   trueBtn.className = 'tf-btn';
@@ -1069,35 +1267,37 @@ function selectTF(ans) {
   if (ans === 'true') {
     trueBtn.classList.add('selected-correct');
     q7Answer = 'true';
+    playCorrect();
+    setTimeout(() => completeQ('q7'), 300);
   } else {
     falseBtn.classList.add('selected-wrong');
     q7Answer = 'false';
-  }
-  // 5+4=9 is correct, so "true" is right
-  setTimeout(() => {
-    if (q7Answer === 'true') {
+    playWrong();
+    setTimeout(() => {
       trueBtn.classList.add('selected-correct');
-      completeQ('q7');
-    } else {
-      completeQ('q7');
-    }
-  }, 300);
+      setTimeout(() => completeQ('q7'), 300);
+    }, 400);
+  }
 }
 
 // Q8 word problem
 function checkQ8() {
+  playClick();
   const v = document.getElementById('q8input').value.trim();
   if (v === '8') {
     document.getElementById('q8input').classList.add('correct');
+    playCorrect();
     completeQ('q8');
   } else {
     document.getElementById('q8input').classList.add('wrong');
+    playWrong();
     setTimeout(() => document.getElementById('q8input').classList.remove('wrong'), 600);
   }
 }
 
 // Q9 paint
 function paintSquare(idx, el) {
+  playClick();
   document.querySelectorAll('.sq-item').forEach((s, i) => {
     if (i !== idx) s.classList.remove('painted-red');
   });
@@ -1106,9 +1306,12 @@ function paintSquare(idx, el) {
 }
 
 function checkQ9() {
+  playClick();
   if (q9Painted.includes(1)) {
+    playCorrect();
     completeQ('q9');
   } else {
+    playWrong();
     wrongQ('q9');
   }
 }
@@ -1130,6 +1333,7 @@ function completeQ(qid) {
   spawnStar(card);
 
   if (completed === 10) {
+    playFanfare();
     setTimeout(showModal, 800);
   }
 }
@@ -1139,6 +1343,10 @@ function wrongQ(qid) {
   card.classList.add('wrong');
   setTimeout(() => card.classList.remove('wrong'), 600);
 }
+
+function spawnStar(el) {
+  playStarPop();
+  const rect = el.getBoundingClientRect();
 
 function updateProgress() {
   document.getElementById('scoreDisplay').textContent = score;
