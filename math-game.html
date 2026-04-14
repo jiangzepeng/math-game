@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌟 快乐数学游戏 🌟</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FFF8F0;
+    --card-bg: #FFFFFF;
+    --primary: #FF6B6B;
+    --secondary: #4ECDC4;
+    --accent: #FFE66D;
+    --purple: #C77DFF;
+    --orange: #FF9A3C;
+    --green: #06D6A0;
+    --red: #EF476F;
+    --blue: #118AB2;
+    --text: #2D3436;
+    --shadow: 0 8px 32px rgba(0,0,0,0.08);
+    --radius: 24px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', 'PingFang SC', sans-serif;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(78,205,196,0.15) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(255,107,107,0.15) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(199,125,255,0.08) 0%, transparent 60%);
+    min-height: 100vh;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  /* Floating background shapes */
+  .bg-shape {
+    position: fixed;
+    border-radius: 50%;
+    opacity: 0.06;
+    z-index: 0;
+    animation: float 6s ease-in-out infinite;
+  }
+  .bg-shape:nth-child(1) { width: 300px; height: 300px; background: var(--primary); top: -100px; left: -100px; animation-delay: 0s; }
+  .bg-shape:nth-child(2) { width: 200px; height: 200px; background: var(--secondary); top: 40%; right: -60px; animation-delay: 2s; }
+  .bg-shape:nth-child(3) { width: 250px; height: 250px; background: var(--purple); bottom: -80px; left: 30%; animation-delay: 4s; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(5deg); }
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 20px 0 10px;
+    position: relative;
+    z-index: 1;
+  }
+  .header h1 {
+    font-size: 2.4rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--primary), var(--purple), var(--blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+  }
+  .header .subtitle {
+    color: #888;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  /* Score & Progress */
+  .score-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    padding: 12px 20px;
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
+  }
+  .score-badge {
+    background: linear-gradient(135deg, var(--accent), var(--orange));
+    color: white;
+    padding: 8px 24px;
+    border-radius: 50px;
+    font-weight: 900;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 15px rgba(255,154,60,0.4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  .progress-wrapper {
+    flex: 1;
+    max-width: 400px;
+    min-width: 200px;
+  }
+  .progress-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #666;
+    margin-bottom: 6px;
+    text-align: center;
+  }
+  .progress-track {
+    background: #EEE;
+    border-radius: 50px;
+    height: 14px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--secondary), var(--green));
+    border-radius: 50px;
+    transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1);
+    position: relative;
+  }
+  .progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 8px;
+    right: 8px;
+    height: 4px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 50px;
+  }
+
+  /* Questions Grid */
+  .questions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    max-width: 1200px;
+    margin: 20px auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  .q-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid transparent;
+  }
+  .q-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--purple));
+  }
+  .q-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+  }
+  .q-card.completed {
+    border-color: var(--green);
+    background: linear-gradient(135deg, #fff, #f0fff4);
+  }
+  .q-card.wrong {
+    border-color: var(--red);
+    animation: shake 0.5s ease-in-out;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+  }
+  .q-card.correct-flash {
+    animation: correctPop 0.6s ease-out;
+  }
+  @keyframes correctPop {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.08); }
+    60% { transform: scale(0.97); }
+    100% { transform: scale(1); }
+  }
+
+  .q-num {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--orange));
+    color: white;
+    font-weight: 900;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(255,107,107,0.3);
+  }
+  .q-card.completed .q-num {
+    background: linear-gradient(135deg, var(--green), var(--secondary));
+    box-shadow: 0 2px 8px rgba(6,214,160,0.3);
+  }
+
+  .q-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.4;
+  }
+
+  /* Apple counting */
+  .apple-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .apple-btn {
+    font-size: 2.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s, filter 0.2s;
+    user-select: none;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,0.15));
+  }
+  .apple-btn:hover { transform: scale(1.2) rotate(5deg); }
+  .apple-btn:active { transform: scale(0.9); }
+  .apple-btn.selected {
+    filter: drop-shadow(0 0 8px var(--accent)) brightness(1.1);
+    transform: scale(1.15);
+  }
+  .apple-hint {
+    font-size: 0.9rem;
+    color: #999;
+    font-weight: 700;
+    text-align: center;
+    margin-top: 8px;
+  }
+  .count-display {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--primary);
+    margin-top: 8px;
+  }
+
+  /* Compare circles */
+  .circle-compare {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 8px;
+  }
+  .circle-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    padding: 12px;
+    border-radius: 16px;
+    border: 3px solid transparent;
+  }
+  .circle-option:hover {
+    transform: scale(1.05);
+    background: #FFF8F0;
+  }
+  .circle-option.selected {
+    border-color: var(--primary);
+    background: #FFF0F0;
+  }
+  .circle-option.correct {
+    border-color: var(--green);
+    background: #F0FFF4;
+  }
+  .circle-big {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FF9A9E, #FECFEF);
+    box-shadow: 0 6px 20px rgba(255,154,158,0.4);
+  }
+  .circle-small {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #A8EDEA, #FED6E3);
+    box-shadow: 0 4px 12px rgba(168,237,234,0.4);
+  }
+  .circle-label {
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: #666;
+  }
+
+  /* Fill in blank */
+  .fill-blank {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 1.4rem;
+    font-weight: 900;
+    flex-wrap: wrap;
+  }
+  .fill-blank input {
+    width: 60px;
+    height: 44px;
+    border: 3px solid #DDD;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 900;
+    font-family: 'Nunito', sans-serif;
+    color: var(--primary);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  .fill-blank input:focus {
+    border-color: var(--purple);
+    box-shadow: 0 0 0 4px rgba(199,125,255,0.2);
+  }
+  .fill-blank input.correct {
+    border-color: var(--green);
+    background: #F0FFF4;
+    color: var(--green);
+  }
+  .fill-blank input.wrong {
+    border-color: var(--red);
+    background: #FFF0F4;
+    animation: shake 0.4s;
+  }
+  .fill-blank button {
+    padding: 8px 20px;
+    background: linear-gradient(135deg, var(--secondary), var(--blue));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 800;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 12px rgba(78,205,196,0.3);
+  }
+  .fill-blank button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(78,205,196,0.4);
+  }
+
+  /* Shape matching */
+  .shape-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .shape-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+    border: 3px solid transparent;
+    min-height: 70px;
+    justify-content: center;
+  }
+  .shape-item:hover {
+    transform: scale(1.05);
+    background: #FFF8F0;
+  }
+  .shape-item.matched {
+    border-color: var(--green);
+    background: #F0FFF4;
+  }
+  .shape-item.selected {
+    border-color: var(--primary);
+    background: #FFF0F0;
+  }
+  .shape-item svg {
+    pointer-events: none;
+  }
+  .shape-name {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #888;
+  }
+
+  /* Neighbor numbers */
+  .number-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    font-size: 1.1rem;
+  }
+  .n-box {
+    width: 52px;
+    height: 52px;
+    border: 3px solid #DDD;
+    border-radius: 14px;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 800;
+    line-height: 46px;
+    font-family: 'Nunito', sans-serif;
+    transition: all 0.2s;
+    outline: none;
+    color: var(--blue);
+  }
+  .n-box:focus {
+    border-color: var(--purple);
+    box-shadow: 0 0 0 3px rgba(199,125,255,0.2);
+  }
+  .n-box.correct {
+    border-color: var(--green);
+    background: #F0FFF4;
+    color: var(--green);
+  }
+  .n-box.wrong {
+    border-color: var(--red);
+    background: #FFF0F4;
+  }
+  .n-center {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--purple), var(--primary));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 12px rgba(199,125,255,0.3);
+  }
+  .n-arrow {
+    font-size: 1.2rem;
+    color: #AAA;
+    font-weight: 900;
+  }
+  .n-labels {
+    display: flex;
+    justify-content: center;
+    gap: 44px;
+    margin-top: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #888;
+  }
+
+  /* True/False */
+  .tf-btns {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  .tf-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    font-size: 2rem;
+    font-weight: 900;
+    border: 4px solid #DDD;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .tf-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  }
+  .tf-btn.selected-correct {
+    border-color: var(--green);
+    background: #F0FFF4;
+    color: var(--green);
+  }
+  .tf-btn.selected-wrong {
+    border-color: var(--red);
+    background: #FFF0F4;
+    color: var(--red);
+  }
+
+  /* Word problem */
+  .word-problem {
+    background: linear-gradient(135deg, #FFF8E1, #FFF3E0);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-left: 4px solid var(--orange);
+  }
+  .word-problem p {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.8;
+  }
+
+  /* Square coloring */
+  .square-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  .sq-item {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    border: 3px solid #DDD;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #CCC;
+  }
+  .sq-item:hover {
+    transform: scale(1.08);
+    border-color: var(--purple);
+  }
+  .sq-item.selected {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(255,107,107,0.2);
+  }
+  .sq-item.painted-red {
+    background: var(--red) !important;
+    border-color: var(--red) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(239,71,111,0.4) !important;
+  }
+  .sq-hint {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #999;
+    font-weight: 700;
+    margin-top: 8px;
+  }
+
+  /* Submit button */
+  .check-btn {
+    display: block;
+    margin: 10px auto 0;
+    padding: 10px 28px;
+    background: linear-gradient(135deg, var(--primary), var(--orange));
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-weight: 800;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(255,107,107,0.3);
+  }
+  .check-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255,107,107,0.4);
+  }
+  .check-btn:active { transform: scale(0.97); }
+
+  /* Completion Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+  .modal-overlay.show {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .modal {
+    background: white;
+    border-radius: 32px;
+    padding: 40px;
+    text-align: center;
+    max-width: 420px;
+    width: 90%;
+    transform: scale(0.8);
+    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  .modal-overlay.show .modal {
+    transform: scale(1);
+  }
+  .modal-emoji {
+    font-size: 4rem;
+    margin-bottom: 16px;
+    animation: bounce 0.6s ease-in-out infinite alternate;
+  }
+  @keyframes bounce {
+    from { transform: translateY(0); }
+    to { transform: translateY(-10px); }
+  }
+  .modal h2 {
+    font-size: 2rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--primary), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .modal .final-score {
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--green);
+    margin: 12px 0;
+  }
+  .modal p {
+    color: #888;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 24px;
+  }
+  .modal-btns {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .modal-btn {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 14px;
+    font-weight: 800;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .modal-btn.primary {
+    background: linear-gradient(135deg, var(--primary), var(--orange));
+    color: white;
+    box-shadow: 0 4px 16px rgba(255,107,107,0.3);
+  }
+  .modal-btn.secondary {
+    background: #F5F5F5;
+    color: #666;
+  }
+  .modal-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  }
+
+  /* Confetti */
+  .confetti {
+    position: fixed;
+    top: -10px;
+    z-index: 200;
+    pointer-events: none;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Star burst */
+  .star-burst {
+    position: fixed;
+    font-size: 3rem;
+    z-index: 150;
+    pointer-events: none;
+    animation: starAnim 0.8s ease-out forwards;
+  }
+  @keyframes starAnim {
+    0% { transform: scale(0) rotate(0deg); opacity: 1; }
+    50% { transform: scale(1.3) rotate(180deg); opacity: 1; }
+    100% { transform: scale(0.5) rotate(360deg) translateY(-60px); opacity: 0; }
+  }
+
+  /* Result icon */
+  .result-icon {
+    position: absolute;
+    top: 10px;
+    right: 52px;
+    font-size: 1.4rem;
+    animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes popIn {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .header h1 { font-size: 1.6rem; }
+    .questions-grid { grid-template-columns: 1fr; }
+    .q-card { padding: 18px; }
+    .fill-blank { font-size: 1.1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Background decorations -->
+<div class="bg-shape"></div>
+<div class="bg-shape"></div>
+<div class="bg-shape"></div>
+
+<!-- Header -->
+<div class="header">
+  <h1>🌟 快乐数学游戏 🌟</h1>
+  <div class="subtitle">每答对一题都会得到星星奖励哦 ✨</div>
+</div>
+
+<!-- Score bar -->
+<div class="score-bar">
+  <div class="score-badge">
+    <span>⭐</span>
+    <span id="scoreDisplay">0</span> 分
+  </div>
+  <div class="progress-wrapper">
+    <div class="progress-label">进度：<span id="progressText">0</span> / 10</div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Questions -->
+<div class="questions-grid">
+
+  <!-- Q1: Count apples -->
+  <div class="q-card" id="q1">
+    <div class="q-num">1</div>
+    <div class="q-title">🍎 数一数，图中有（ ）个苹果？</div>
+    <div class="apple-row" id="appleRow">
+      <button class="apple-btn" onclick="toggleApple(this)">🍎</button>
+      <button class="apple-btn" onclick="toggleApple(this)">🍎</button>
+      <button class="apple-btn" onclick="toggleApple(this)">🍎</button>
+    </div>
+    <div class="apple-hint">点击选择数量</div>
+    <button class="check-btn" onclick="checkQ1()">✅ 确认</button>
+  </div>
+
+  <!-- Q2: Compare circles -->
+  <div class="q-card" id="q2">
+    <div class="q-num">2</div>
+    <div class="q-title">🔴 比一比，哪个大？在大的下面画"√"</div>
+    <div class="circle-compare">
+      <div class="circle-option" id="cirBig" onclick="selectCircle(this, 'big')">
+        <div class="circle-big"></div>
+        <div class="circle-label">大的圆</div>
+      </div>
+      <div class="circle-option" id="cirSmall" onclick="selectCircle(this, 'small')">
+        <div class="circle-small"></div>
+        <div class="circle-label">小的圆</div>
+      </div>
+    </div>
+    <button class="check-btn" onclick="checkQ2()">✅ 确认</button>
+  </div>
+
+  <!-- Q3: 10+5 = ? -->
+  <div class="q-card" id="q3">
+    <div class="q-num">3</div>
+    <div class="q-title">🧮 计算填空</div>
+    <div class="fill-blank">
+      10 <span style="font-size:1.6rem;color:var(--primary)">+</span> 5 = <input type="number" id="q3input" min="0" max="99" placeholder="?">
+      <button onclick="checkQ3()">✓</button>
+    </div>
+  </div>
+
+  <!-- Q4: 9-3 = ? -->
+  <div class="q-card" id="q4">
+    <div class="q-num">4</div>
+    <div class="q-title">🧮 继续计算</div>
+    <div class="fill-blank">
+      9 <span style="font-size:1.6rem;color:var(--red)">−</span> 3 = <input type="number" id="q4input" min="0" max="99" placeholder="?">
+      <button onclick="checkQ4()">✓</button>
+    </div>
+  </div>
+
+  <!-- Q5: Shape matching -->
+  <div class="q-card" id="q5">
+    <div class="q-num">5</div>
+    <div class="q-title">🔷 连线：把相同的图形连起来</div>
+    <div class="shape-grid" id="shapeGrid">
+      <!-- Will be populated by JS -->
+    </div>
+  </div>
+
+  <!-- Q6: 18's neighbors -->
+  <div class="q-card" id="q6">
+    <div class="q-num">6</div>
+    <div class="q-title">🔢 填空：18的前一个数是（ ），后一个数是（ ）</div>
+    <div class="number-line">
+      <input class="n-box" id="q6a" placeholder="?">
+      <div class="n-arrow">←</div>
+      <div class="n-center">18</div>
+      <div class="n-arrow">→</div>
+      <input class="n-box" id="q6b" placeholder="?">
+    </div>
+    <div class="n-labels">
+      <span>前一个</span>
+      <span>后一个</span>
+    </div>
+    <button class="check-btn" onclick="checkQ6()">✅ 确认</button>
+  </div>
+
+  <!-- Q7: True/False -->
+  <div class="q-card" id="q7">
+    <div class="q-num">7</div>
+    <div class="q-title">✅❌ 判断：5 + 4 = 9，对吗？</div>
+    <div class="tf-btns">
+      <button class="tf-btn" id="tfTrue" onclick="selectTF('true')">√ 对</button>
+      <button class="tf-btn" id="tfFalse" onclick="selectTF('false')">✗ 错</button>
+    </div>
+  </div>
+
+  <!-- Q8: Word problem -->
+  <div class="q-card" id="q8">
+    <div class="q-num">8</div>
+    <div class="q-title">📚 解决问题</div>
+    <div class="word-problem">
+      <p>📖 小明有5本书，又买了3本，现在一共有多少本书？</p>
+    </div>
+    <div class="fill-blank">
+      答案 = <input type="number" id="q8input" placeholder="?">
+      <button onclick="checkQ8()">✓</button>
+    </div>
+  </div>
+
+  <!-- Q9: Paint 2nd square -->
+  <div class="q-card" id="q9">
+    <div class="q-num">9</div>
+    <div class="q-title">🎨 涂色：从左数第2个涂红色</div>
+    <div class="square-row" id="squareRow">
+      <div class="sq-item" onclick="paintSquare(0, this)">1</div>
+      <div class="sq-item" onclick="paintSquare(1, this)">2</div>
+      <div class="sq-item" onclick="paintSquare(2, this)">3</div>
+      <div class="sq-item" onclick="paintSquare(3, this)">4</div>
+      <div class="sq-item" onclick="paintSquare(4, this)">5</div>
+    </div>
+    <div class="sq-hint">点击第2个方块涂色</div>
+    <button class="check-btn" onclick="checkQ9()">✅ 确认</button>
+  </div>
+
+  <!-- Q10: 10+10 -->
+  <div class="q-card" id="q10">
+    <div class="q-num">10</div>
+    <div class="q-title">🧮 最后一题！</div>
+    <div class="fill-blank">
+      10 <span style="font-size:1.6rem;color:var(--primary)">+</span> 10 = <input type="number" id="q10input" placeholder="?">
+      <button onclick="checkQ10()">✓</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Completion Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-emoji" id="modalEmoji">🏆</div>
+    <h2 id="modalTitle">太棒了！</h2>
+    <div class="final-score" id="finalScore">10</div>
+    <p id="modalMsg">你真是个数学小天才！</p>
+    <div class="modal-btns">
+      <button class="modal-btn primary" onclick="restartGame()">🔄 再玩一次</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// State
+let score = 0;
+let completed = 0;
+let q1Selected = [];
+let q2Answer = null;
+let q5Pairs = {};
+let q5Selected = null;
+let q7Answer = null;
+let q9Painted = [];
+
+// Init shape matching
+function initShapeGrid() {
+  const grid = document.getElementById('shapeGrid');
+  const shapes = [
+    { id: 's1', label: '圆形', svg: `<svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="#FF6B6B" stroke-width="3"/></svg>` },
+    { id: 's2', label: '三角形', svg: `<svg width="40" height="40" viewBox="0 0 40 40"><polygon points="20,6 36,34 4,34" fill="none" stroke="#4ECDC4" stroke-width="3" stroke-linejoin="round"/></svg>` },
+    { id: 's3', label: '正方形', svg: `<svg width="40" height="40" viewBox="0 0 40 40"><rect x="5" y="5" width="30" height="30" fill="none" stroke="#FFE66D" stroke-width="3" rx="3"/></svg>` },
+    { id: 's4', label: '心形', svg: `<svg width="40" height="40" viewBox="0 0 40 40"><path d="M20 35 C8 24 4 16 10 10 C14 6 20 10 20 16 C20 10 26 6 30 10 C36 16 32 24 20 35Z" fill="none" stroke="#C77DFF" stroke-width="2.5"/></svg>` },
+    { id: 's5', label: '星星', svg: `<svg width="40" height="40" viewBox="0 0 40 40"><polygon points="20,4 23.5,14.5 35,14.5 26,22 29.5,33 20,26 10.5,33 14,22 5,14.5 16.5,14.5" fill="none" stroke="#FF9A3C" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: 's6', label: '菱形', svg: `<svg width="40" height="40" viewBox="0 0 40 40"><polygon points="20,4 36,20 20,36 4,20" fill="none" stroke="#06D6A0" stroke-width="3" stroke-linejoin="round"/></svg>` },
+  ];
+
+  // Duplicate for matching
+  const all = [...shapes, ...shapes.map(s => ({...s, id: s.id + 'b'}))];
+  // Shuffle
+  for (let i = all.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [all[i], all[j]] = [all[j], all[i]];
+  }
+
+  grid.innerHTML = '';
+  all.forEach(shape => {
+    const div = document.createElement('div');
+    div.className = 'shape-item';
+    div.id = shape.id;
+    div.innerHTML = shape.svg + `<span class="shape-name">${shape.label}</span>`;
+    div.onclick = () => selectShape(shape.id, shape.label, div);
+    grid.appendChild(div);
+  });
+}
+
+function selectShape(id, label, el) {
+  if (el.classList.contains('matched')) return;
+
+  if (q5Selected === null) {
+    q5Selected = { id, label, el };
+    el.classList.add('selected');
+  } else {
+    if (q5Selected.id === id) {
+      q5Selected.el.classList.remove('selected');
+      q5Selected = null;
+    } else if (q5Selected.label === label) {
+      // Match!
+      el.classList.add('matched');
+      el.classList.remove('selected');
+      q5Selected.el.classList.add('matched');
+      q5Selected.el.classList.remove('selected');
+      q5Pairs[label] = true;
+      q5Selected = null;
+      spawnStar(el);
+      spawnStar(q5Selected?.el);
+      if (Object.keys(q5Pairs).length === 6) {
+        setTimeout(() => completeQ('q5'), 500);
+      }
+    } else {
+      q5Selected.el.classList.remove('selected');
+      el.classList.add('selected');
+      q5Selected = { id, label, el };
+    }
+  }
+}
+
+// Apple selection
+function toggleApple(btn) {
+  btn.classList.toggle('selected');
+}
+
+function checkQ1() {
+  const selected = document.querySelectorAll('#appleRow .apple-btn.selected');
+  if (selected.length === 3) {
+    selected.forEach(b => b.classList.add('selected'));
+    completeQ('q1');
+  } else {
+    wrongQ('q1');
+  }
+}
+
+// Circle selection
+function selectCircle(el, type) {
+  document.querySelectorAll('.circle-option').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  q2Answer = type;
+}
+
+function checkQ2() {
+  if (q2Answer === 'big') {
+    document.getElementById('cirBig').classList.add('correct');
+    completeQ('q2');
+  } else if (q2Answer !== null) {
+    wrongQ('q2');
+  }
+}
+
+// Q3, Q4, Q10, Q8
+function checkQ3() {
+  const v = document.getElementById('q3input').value.trim();
+  if (v === '15') {
+    document.getElementById('q3input').classList.add('correct');
+    completeQ('q3');
+  } else {
+    document.getElementById('q3input').classList.add('wrong');
+    setTimeout(() => document.getElementById('q3input').classList.remove('wrong'), 600);
+  }
+}
+
+function checkQ4() {
+  const v = document.getElementById('q4input').value.trim();
+  if (v === '6') {
+    document.getElementById('q4input').classList.add('correct');
+    completeQ('q4');
+  } else {
+    document.getElementById('q4input').classList.add('wrong');
+    setTimeout(() => document.getElementById('q4input').classList.remove('wrong'), 600);
+  }
+}
+
+function checkQ10() {
+  const v = document.getElementById('q10input').value.trim();
+  if (v === '20') {
+    document.getElementById('q10input').classList.add('correct');
+    completeQ('q10');
+  } else {
+    document.getElementById('q10input').classList.add('wrong');
+    setTimeout(() => document.getElementById('q10input').classList.remove('wrong'), 600);
+  }
+}
+
+// Q6 neighbors
+function checkQ6() {
+  const a = document.getElementById('q6a').value.trim();
+  const b = document.getElementById('q6b').value.trim();
+  const q6aEl = document.getElementById('q6a');
+  const q6bEl = document.getElementById('q6b');
+
+  if (a === '17' && b === '19') {
+    q6aEl.classList.add('correct');
+    q6bEl.classList.add('correct');
+    completeQ('q6');
+  } else {
+    if (a !== '17') q6aEl.classList.add('wrong');
+    if (b !== '19') q6bEl.classList.add('wrong');
+    setTimeout(() => {
+      q6aEl.classList.remove('wrong');
+      q6bEl.classList.remove('wrong');
+    }, 600);
+  }
+}
+
+// Q7 True/False
+function selectTF(ans) {
+  const trueBtn = document.getElementById('tfTrue');
+  const falseBtn = document.getElementById('tfFalse');
+  trueBtn.className = 'tf-btn';
+  falseBtn.className = 'tf-btn';
+  if (ans === 'true') {
+    trueBtn.classList.add('selected-correct');
+    q7Answer = 'true';
+  } else {
+    falseBtn.classList.add('selected-wrong');
+    q7Answer = 'false';
+  }
+  // 5+4=9 is correct, so "true" is right
+  setTimeout(() => {
+    if (q7Answer === 'true') {
+      trueBtn.classList.add('selected-correct');
+      completeQ('q7');
+    } else {
+      completeQ('q7');
+    }
+  }, 300);
+}
+
+// Q8 word problem
+function checkQ8() {
+  const v = document.getElementById('q8input').value.trim();
+  if (v === '8') {
+    document.getElementById('q8input').classList.add('correct');
+    completeQ('q8');
+  } else {
+    document.getElementById('q8input').classList.add('wrong');
+    setTimeout(() => document.getElementById('q8input').classList.remove('wrong'), 600);
+  }
+}
+
+// Q9 paint
+function paintSquare(idx, el) {
+  document.querySelectorAll('.sq-item').forEach((s, i) => {
+    if (i !== idx) s.classList.remove('painted-red');
+  });
+  el.classList.add('painted-red');
+  q9Painted = [idx];
+}
+
+function checkQ9() {
+  if (q9Painted.includes(1)) {
+    completeQ('q9');
+  } else {
+    wrongQ('q9');
+  }
+}
+
+// Complete / Wrong
+function completeQ(qid) {
+  const card = document.getElementById(qid);
+  if (card.classList.contains('completed')) return;
+  card.classList.add('completed', 'correct-flash');
+  // Add result icon
+  const icon = document.createElement('span');
+  icon.className = 'result-icon';
+  icon.textContent = '✅';
+  card.querySelector('.q-num').after(icon);
+
+  score += 10;
+  completed++;
+  updateProgress();
+  spawnStar(card);
+
+  if (completed === 10) {
+    setTimeout(showModal, 800);
+  }
+}
+
+function wrongQ(qid) {
+  const card = document.getElementById(qid);
+  card.classList.add('wrong');
+  setTimeout(() => card.classList.remove('wrong'), 600);
+}
+
+function updateProgress() {
+  document.getElementById('scoreDisplay').textContent = score;
+  document.getElementById('progressText').textContent = completed;
+  document.getElementById('progressFill').style.width = (completed * 10) + '%';
+}
+
+function spawnStar(el) {
+  const rect = el.getBoundingClientRect();
+  const star = document.createElement('div');
+  star.className = 'star-burst';
+  star.textContent = ['⭐', '🌟', '💫', '✨'][Math.floor(Math.random() * 4)];
+  star.style.left = (rect.left + rect.width / 2 - 20) + 'px';
+  star.style.top = (rect.top + rect.height / 2 - 20) + 'px';
+  document.body.appendChild(star);
+  setTimeout(() => star.remove(), 800);
+}
+
+function showModal() {
+  // Confetti explosion
+  for (let i = 0; i < 50; i++) {
+    setTimeout(() => spawnConfetti(), i * 30);
+  }
+
+  const emoji = document.getElementById('modalEmoji');
+  const title = document.getElementById('modalTitle');
+  const scoreEl = document.getElementById('finalScore');
+  const msg = document.getElementById('modalMsg');
+
+  scoreEl.textContent = score + ' 分';
+  if (score === 100) {
+    emoji.textContent = '🏆';
+    title.textContent = '满分！太厉害了！';
+    msg.textContent = '你是数学小冠军！🎉';
+  } else if (score >= 80) {
+    emoji.textContent = '🌟';
+    title.textContent = '很棒！继续加油！';
+    msg.textContent = '再做一次能拿满分！💪';
+  } else if (score >= 50) {
+    emoji.textContent = '👍';
+    title.textContent = '还不错！';
+    msg.textContent = '多练习一定能更好！🌈';
+  } else {
+    emoji.textContent = '💪';
+    title.textContent = '加油！';
+    msg.textContent = '别灰心，再试一次！';
+  }
+
+  document.getElementById('modal').classList.add('show');
+}
+
+function spawnConfetti() {
+  const colors = ['#FF6B6B','#4ECDC4','#FFE66D','#C77DFF','#FF9A3C','#06D6A0','#118AB2'];
+  const c = document.createElement('div');
+  c.className = 'confetti';
+  c.style.left = Math.random() * 100 + 'vw';
+  c.style.width = (Math.random() * 10 + 6) + 'px';
+  c.style.height = c.style.width;
+  c.style.background = colors[Math.floor(Math.random() * colors.length)];
+  c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+  c.style.animationDuration = (Math.random() * 2 + 2) + 's';
+  document.body.appendChild(c);
+  setTimeout(() => c.remove(), 4000);
+}
+
+function restartGame() {
+  location.reload();
+}
+
+// Init
+initShapeGrid();
+
+// Enter key support
+document.querySelectorAll('input').forEach(input => {
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      input.dispatchEvent(new Event('change'));
+      // Find which question and trigger check
+      const id = input.id;
+      if (id === 'q3input') checkQ3();
+      else if (id === 'q4input') checkQ4();
+      else if (id === 'q8input') checkQ8();
+      else if (id === 'q10input') checkQ10();
+    }
+  });
+});
+</script>
+</body>
+</html>
